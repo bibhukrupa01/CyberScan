@@ -310,4 +310,237 @@ def superscan(host, start_port, end_port):
                     service = "Unknown service"
                 print("\t{} {}: Open".format(i, service))
         else:
-            print("[*] Sorry, No
+            print("[*] Sorry, No Open Ports Found.!!")
+
+    except KeyboardInterrupt:
+        print("\n[*] You Pressed Ctrl+C. Exiting")
+        sys.exit(1)
+
+
+def pcap_analyser_eth(file):
+    pkts = rdpcap(file)
+    i = 0
+    for pkt in pkts:
+        i += 1
+        print("-" * 40)
+        print("[*] Packet : {}".format(i))
+        print("[+] ### [ Ethernet ] ###")
+        try:
+            print("[*] Mac Destination : {}".format(pkt.dst))
+            print("[*] Mac Source : {}".format(pkt.src))
+            print("[*] Ethernet Type : {}".format(pkt.type))
+        except Exception:
+            print(pkt.summary())
+
+
+def pcap_analyser_ip(file):
+    pkts = rdpcap(file)
+    i = 0
+    for pkt in pkts:
+        if pkt.haslayer(IP):
+            i += 1
+            print("-" * 40)
+            print("[*] Packet : {}".format(i))
+            print("[+] ###[ IP ] ###")
+            IPpkt = pkt[IP]
+            srcIP = IPpkt.fields.get('src')
+            dstIP = IPpkt.fields.get('dst')
+            print("[*] IP Source : {}".format(srcIP))
+            print("[*] IP Destination : {}".format(dstIP))
+            try:
+                print("[*] IP Version : {}".format(IPpkt.version))
+                print("[*] IP Ihl : {}".format(IPpkt.ihl))
+                print("[*] IP Tos : {}".format(IPpkt.tos))
+                print("[*] IP Len : {}".format(IPpkt.len))
+                print("[*] IP Id : {}".format(IPpkt.id))
+                print("[*] IP Flags : {}".format(IPpkt.flags))
+                print("[*] IP Frag : {}".format(IPpkt.frag))
+                print("[*] IP Ttl : {}".format(IPpkt.ttl))
+                print("[*] IP Protocol : {}".format(IPpkt.proto))
+                print("[*] IP Chksum : {}".format(IPpkt.chksum))
+                print("[*] IP Options : {}".format(IPpkt.options))
+                print("[*] IP Dump : ")
+                print(hexdump(IPpkt))
+            except Exception:
+                print(IPpkt.summary())
+
+
+def pcap_analyser_tcp(file):
+    pkts = rdpcap(file)
+    i = 0
+    SYN = 0x02
+    FIN = 0x01
+    RST = 0x04
+    PSH = 0x08
+    ACK = 0x10
+    URG = 0x20
+
+    for pkt in pkts:
+        if pkt.haslayer(TCP):
+            i += 1
+            print("-" * 40)
+            print("[*] Packet : {}".format(i))
+            print("[+] ###[ TCP ] ###")
+            TCPpkt = pkt[TCP]
+            try:
+                print("[*] TCP Source Port : {}".format(TCPpkt.sport))
+                print("[*] TCP Destination Port : {}".format(TCPpkt.dport))
+                print("[*] TCP Seq : {}".format(TCPpkt.seq))
+                print("[*] TCP Ack : {}".format(TCPpkt.ack))
+                print("[*] TCP Dataofs : {}".format(TCPpkt.dataofs))
+                print("[*] TCP Reserved : {}".format(TCPpkt.reserved))
+                print("[*] TCP Flags : {}".format(TCPpkt.flags))
+                print("[*] TCP Window : {}".format(TCPpkt.window))
+                print("[*] TCP Chksum : {}".format(TCPpkt.chksum))
+                print("[*] TCP Urgptr : {}".format(TCPpkt.urgptr))
+                print("[*] TCP Options : {}".format(TCPpkt.options))
+
+                FlagsTCP = pkt[TCP].flags
+                if FlagsTCP == SYN:
+                    print("[*] TCP SYN FLAGS : 1")
+                elif FlagsTCP == RST:
+                    print("[*] TCP RST FLAGS : 1")
+                elif FlagsTCP == ACK:
+                    print("[*] TCP ACK FLAGS : 1")
+                elif FlagsTCP == FIN:
+                    print("[*] TCP FIN FLAGS : 1")
+                elif FlagsTCP == URG:
+                    print("[*] TCP URG FLAGS : 1")
+                elif FlagsTCP == PSH:
+                    print("[*] TCP PSH FLAGS : 1")
+
+                print("[*] TCP Dump : ")
+                print(hexdump(TCPpkt))
+            except Exception:
+                print(TCPpkt.summary())
+
+
+def pcap_analyser_udp(file):
+    pkts = rdpcap(file)
+    i = 0
+    for pkt in pkts:
+        if pkt.haslayer(UDP):
+            i += 1
+            print("-" * 40)
+            print("[*] Packet : {}".format(i))
+            print("[+] ###[ UDP ] ###")
+            UDPpkt = pkt[UDP]
+            try:
+                print("[*] UDP Source Port : {}".format(UDPpkt.sport))
+                print("[*] UDP Destination Port : {}".format(UDPpkt.dport))
+                print("[*] UDP Len : {}".format(UDPpkt.len))
+                print("[*] UDP Chksum : {}".format(UDPpkt.chksum))
+                print("[*] UDP Dump : ")
+                print(hexdump(UDPpkt))
+            except Exception:
+                print(UDPpkt.summary())
+
+
+def pcap_analyser_icmp(file):
+    pkts = rdpcap(file)
+    i = 0
+    for pkt in pkts:
+        if pkt.haslayer(ICMP):
+            i += 1
+            print("-" * 40)
+            print("[*] Packet : {}".format(i))
+            print("[+] ###[ ICMP ] ###")
+            ICMPpkt = pkt[ICMP]
+            try:
+                print("[*] ICMP Type : {}".format(ICMPpkt.type))
+                print("[*] ICMP Code : {}".format(ICMPpkt.code))
+                print("[*] ICMP Chksum : {}".format(ICMPpkt.chksum))
+                print("[*] ICMP Id : {}".format(ICMPpkt.id))
+                print("[*] ICMP Seq : {}".format(ICMPpkt.seq))
+                print("[*] ICMP Dump : ")
+                print(hexdump(ICMPpkt))
+            except Exception:
+                print(ICMPpkt.summary())
+
+
+def main():
+    global serveur
+    global level
+    global sport
+    global eport
+    global file
+    global flag
+    flag = 0
+
+    try:
+        parser = argparse.ArgumentParser(description=__description__,
+                                         formatter_class=argparse.RawTextHelpFormatter,
+                                         epilog='''\nlevels with ip adress:
+  scan : scan ports
+  arp : ping arp
+  icmp : ping icmp
+  tcp : ping tcp
+  udp : ping udp
+  geoip : geolocalisation
+
+levels with pcap file:
+  eth : extract ethernet headers
+  ip : extract \tip headers
+  tcp : extract tcp headers
+  udp : extract udp headers
+  icmp : extract icmp headers
+\n                    ''')
+
+        parser.add_argument('-s', '--serveur', dest='serveur', help='attack to serveur ip')
+        parser.add_argument('-p', '--level', dest='level', help='stack to level')
+        parser.add_argument('-d', '--sport', dest='sport', help='start port to scan')
+        parser.add_argument('-t', '--eport', dest='eport', help='end port to scan')
+        parser.add_argument('-f', '--file', dest='file', help='read pcap file')
+        parser.add_argument('--version', action='version', version=__version__)
+
+        args = parser.parse_args()
+        serveur = args.serveur
+        file = args.file
+        level = args.level
+        sport = args.sport
+        eport = args.eport
+
+        if file is not None or serveur is not None:
+            header()
+            usage()
+
+            if file and level == 'eth':
+                pcap_analyser_eth(file)
+            elif file and level == 'ip':
+                pcap_analyser_ip(file)
+            elif file and level == 'tcp':
+                pcap_analyser_tcp(file)
+            elif file and level == 'udp':
+                pcap_analyser_udp(file)
+            elif file and level == 'icmp':
+                pcap_analyser_icmp(file)
+            elif serveur is not None and level == 'arp':
+                arp_ping(serveur)
+            elif serveur is not None and level == 'icmp':
+                icmp_ping(serveur)
+            elif serveur is not None and level == 'tcp' and sport is not None:
+                port = int(sport)
+                tcp_ping(serveur, port)
+            elif serveur is not None and level == 'scan' and sport is not None and eport is not None:
+                start_port = int(sport)
+                end_port = int(eport)
+                flag = 0
+                superscan(serveur, start_port, end_port)
+            elif serveur is not None and level == 'scan' and sport is None and eport is None:
+                start_port = 0
+                end_port = 0
+                flag = 1
+                superscan(serveur, start_port, end_port)
+            elif serveur is not None and level == 'udp':
+                udp_ping(serveur, port=0)
+            elif serveur is not None and level == 'geoip':
+                geo_ip(serveur)
+        else:
+            print("usage: CyberScan.py [-h] [-s SERVEUR] [-p LEVEL] [-d SPORT] [-t EPORT] [-f FILE]\nuse cyberscan -h to help")
+    except KeyboardInterrupt:
+        print("\n[*] You Pressed Ctrl+C. Exiting")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
